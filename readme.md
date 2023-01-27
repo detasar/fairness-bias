@@ -24,8 +24,8 @@ git clone https://github.com/your-username/Bias-and-Fairness-Check-for-AI-Models
 pip install -r requirements.txt
 
 ```
-##Usage
-###Bias Check
+## Usage
+### Bias Check
 ```python
 
 from bias_check import bias_check
@@ -37,9 +37,9 @@ bias_check(input_file, output_file)
 ```
 This will check for multiple types of biases in the input dataset and will write the scores in the output dataset.
 
-##Fairness Check
+## Fairness Check
 ```python
-Copy code
+
 from fairness_check import fairness_check
 
 input_file = 'input.csv'
@@ -49,19 +49,20 @@ fairness_check(input_file, output_file)
 ```
 This will check for fairness issues in the input dataset and will write the scores in the output dataset.
 
-###Unit Test
+### Unit Test
 The repository also contains a test_bias_fairness.py file which contains unit tests for bias_check and fairness_check functions. To run these tests, use the following command:
 
 
-```python -m unittest test_bias_fairness.py
+```python
+python -m unittest test_bias_fairness.py
 ```
-##Additional Information
+## Additional Information
 This repository is only an example and the actual implementation may vary depending on the specific use case and dataset. The code also does not cover all possible types of biases and fairness issues, and should be used as a starting point for further testing and analysis.
 
-###Contributing
+### Contributing
 Please feel free to contribute to this repository by creating a pull request with new features and improvements.
 
-##Authors
+## Authors
 Emre Tasar
 License
 This project is licensed under the MIT License - see the LICENSE.md file for details.

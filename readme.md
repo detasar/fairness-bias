@@ -17,6 +17,5 @@ from bias_check import bias_check
 
 bias_check('input.csv', 'output.csv')
 
-from fairness_check import fairness_check
-
-fairness_check('input.csv', 'output.csv')
+from fairness import fairness
+fairness('input.csv', 'output.csv')

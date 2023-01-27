@@ -40,7 +40,7 @@ This will check for multiple types of biases in the input dataset and will write
 ## Fairness Check
 ```python
 
-from fairness_check import fairness_check
+from fairness import fairness
 
 input_file = 'input.csv'
 output_file = 'output.csv'

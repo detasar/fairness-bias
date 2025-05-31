@@ -1,3 +1,5 @@
 pandas
 aif360
 unittest
+PyYAML
+matplotlib

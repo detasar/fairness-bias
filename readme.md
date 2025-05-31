@@ -1,70 +1,288 @@
-# README.md
+# Bias and Fairness Analysis Toolkit
 
-# Bias and Fairness Check for AI Models
+This repository provides Python scripts to analyze datasets and AI model outputs for potential bias and fairness issues. It leverages the AIF360 toolkit.
 
-This repository contains two Python scripts, bias_check.py and fairness.py, which can be used to check for multiple types of biases and fairness issues in an input dataset and output scoring table of an AI model.
+## Overview
+
+The toolkit currently includes two main scripts:
+-   `bias_check.py`: Focuses on metrics related to dataset bias.
+-   `fairness.py`: Focuses on fairness metrics typically evaluated on model predictions (or actual labels).
+
+These tools help in identifying disparities across different demographic groups defined by protected attributes.
 
 ## Prerequisites
-- pandas
-- aif360
-- Python 3.x
 
-## Installing
+-   Python 3.x
+-   pandas
+-   aif360
 
-### Clone this repository
+## Installation
 
-```bash
-git clone https://github.com/your-username/Bias-and-Fairness-Check-for-AI-Models.git
+1.  **Clone this repository:**
+    ```bash
+    git clone <repository_url>
+    # Replace <repository_url> with the actual URL of this repository
+    cd <repository_directory>
+    ```
 
-```
+2.  **Install dependencies:**
+    It's recommended to use a virtual environment.
+    ```bash
+    python -m venv venv
+    source venv/bin/activate # On Windows use `venv\Scripts\activate`
+    pip install pandas aif360
+    ```
+    (If a `requirements.txt` file is provided with specific versions, you can use `pip install -r requirements.txt` instead).
 
-### Install the required libraries by running:
-
-```python
-pip install -r requirements.txt
-
-```
 ## Usage
-### Bias Check
-```python
 
+Both scripts require input data in CSV format. You need to specify the label (outcome) column, protected attribute(s), and how privileged/unprivileged groups and favorable/unfavorable outcomes are defined.
+
+### `bias_check.py`
+
+This script computes dataset bias metrics.
+
+```python
 from bias_check import bias_check
 
-input_file = 'input.csv'
-output_file = 'output.csv'
+input_file = 'your_data.csv'       # Path to your input CSV file
+output_file = 'bias_metrics.csv'   # Path to save the results
+label_name = 'outcome'             # Column name for the target variable (e.g., loan_approved)
+protected_attribute_names = ['sex', 'race'] # List of protected attribute column names
+favorable_label_value = 1.0        # Value in 'label_name' considered favorable (e.g., 1 for approved)
+unfavorable_label_value = 0.0      # Value in 'label_name' considered unfavorable (e.g., 0 for denied)
 
-bias_check(input_file, output_file)
+# Define privileged and unprivileged groups based on your data's encoding.
+# Example: For 'sex', 1 might be privileged (e.g., male) and 0 unprivileged (e.g., female).
+# For 'race', 'White' might be privileged and 'Black' unprivileged.
+# These must be lists of dictionaries.
+privileged_groups = [{'sex': 1}, {'race': 'White'}]
+unprivileged_groups = [{'sex': 0}, {'race': 'Black'}]
+
+bias_check(
+    input_file=input_file,
+    output_file=output_file,
+    label_name=label_name,
+    protected_attribute_names=protected_attribute_names,
+    privileged_groups=privileged_groups,
+    unprivileged_groups=unprivileged_groups,
+    favorable_label_value=favorable_label_value,
+    unfavorable_label_value=unfavorable_label_value
+)
+
+print(f"Bias metrics saved to {output_file}")
 ```
-This will check for multiple types of biases in the input dataset and will write the scores in the output dataset.
+This will analyze `your_data.csv` and save computed bias metrics to `bias_metrics.csv`.
 
-## Fairness Check
+### `fairness.py` (using `fairness_check`)
+
+This script computes fairness metrics, often applied to model predictions but can also analyze original labels.
+
 ```python
+from fairness import fairness_check # Ensure this matches the function name in fairness.py
 
-from fairness import fairness
+input_file = 'your_data_with_predictions.csv' # Your data, potentially with model predictions
+output_file = 'fairness_metrics.csv'
+label_name = 'actual_outcome'          # Column name for the true outcome
+# If evaluating model predictions, this would be the true label.
+# If evaluating dataset labels, it's the label itself.
 
-input_file = 'input.csv'
-output_file = 'output.csv'
+protected_attribute_names = ['age_group'] # Example: ['age_group']
+favorable_label_value = 1.0               # Favorable outcome (e.g., loan_granted = 1)
+unfavorable_label_value = 0.0             # Unfavorable outcome (e.g., loan_granted = 0)
 
-fairness_check(input_file, output_file)
+# Example: 'age_group': 'adult' is privileged, 'young' is unprivileged
+privileged_groups = [{'age_group': 'adult'}]
+unprivileged_groups = [{'age_group': 'young'}]
+
+
+# Note: For fairness_check, the 'data' (first argument to ClassificationMetric) and
+# 'classified_dataset' (second argument) are both derived from input_file.
+# This means we are evaluating the fairness of the labels present in input_file.
+# If you have a separate file or columns for model predictions, AIF360 allows
+# comparing the original dataset with a dataset containing predictions.
+# For simplicity, this example evaluates the input data directly.
+
+fairness_check(
+    input_file=input_file,
+    output_file=output_file,
+    label_name=label_name,
+    protected_attribute_names=protected_attribute_names,
+    privileged_groups=privileged_groups,
+    unprivileged_groups=unprivileged_groups,
+    favorable_label_value=favorable_label_value,
+    unfavorable_label_value=unfavorable_label_value
+)
+
+print(f"Fairness metrics saved to {output_file}")
 ```
-This will check for fairness issues in the input dataset and will write the scores in the output dataset.
+This will analyze the specified dataset and save fairness metrics to `fairness_metrics.csv`.
 
-### Unit Test
-The repository also contains a test_bias_fairness.py file which contains unit tests for bias_check and fairness_check functions. To run these tests, use the following command:
+## Available Metrics
 
+The following metrics are calculated by the scripts:
+
+### From `bias_check.py`
+
+*   **Disparate Impact**
+    *   **Description:** Measures the ratio of the rate of favorable outcomes for the unprivileged group to that of the privileged group.
+        `DI = P(Y=favorable | G=unprivileged) / P(Y=favorable | G=privileged)`
+    *   **Interpretation:** Values close to 1.0 are preferred. Values significantly less than 1 (e.g., < 0.8) may indicate bias against the unprivileged group, while values significantly greater than 1 (e.g., > 1.25) may indicate bias against the privileged group. The "four-fifths rule" (DI < 0.8) is a common, though not definitive, threshold.
+
+*   **Average Odds Difference**
+    *   **Description:** Computes the average of the difference in false positive rates (FPR) and true positive rates (TPR) between unprivileged and privileged groups.
+        `Average Odds Difference = 0.5 * [(FPR_unprivileged - FPR_privileged) + (TPR_unprivileged - TPR_privileged)]`
+    *   **Interpretation:** Values closer to 0 indicate better equality of opportunity in terms of error rates. Negative values may suggest bias against the unprivileged group, while positive values may suggest bias against the privileged group.
+
+*   **Theil Index**
+    *   **Description:** A measure of inequality. In this context, it's used to measure inequality in outcomes between groups. It ranges from 0 (perfect equality) to 1 (maximum inequality).
+    *   **Interpretation:** Lower values are better, indicating less disparity.
+
+### From `fairness.py` (via `fairness_check`)
+
+*   **Accuracy**
+    *   **Description:** Standard classification accuracy: `(TP + TN) / (TP + TN + FP + FN)`.
+    *   **Interpretation:** Overall correctness of the labels/predictions. Does not by itself indicate fairness.
+
+*   **Balanced Accuracy**
+    *   **Description:** The average of True Positive Rate (Recall/Sensitivity) and True Negative Rate (Specificity). Useful for imbalanced datasets.
+        `Balanced Accuracy = (TPR + TNR) / 2`
+    *   **Interpretation:** Provides a more balanced view of accuracy, especially when classes are imbalanced.
+
+*   **Demographic Parity Difference (Statistical Parity Difference)**
+    *   **Description:** The difference in the rate of favorable outcomes received by the unprivileged group and the privileged group.
+        `DPD = P(Y=favorable | G=unprivileged) - P(Y=favorable | G=privileged)`
+    *   **Interpretation:** Values closer to 0 indicate better demographic parity. Positive values mean the unprivileged group has a higher rate of favorable outcomes; negative values mean the privileged group does.
+
+*   **Equal Opportunity Difference**
+    *   **Description:** The difference in true positive rates (TPR) between unprivileged and privileged groups.
+        `EOD = TPR_unprivileged - TPR_privileged`
+    *   **Interpretation:** Measures whether individuals who should receive a favorable outcome have an equal chance of doing so, regardless of group membership. Values closer to 0 are preferred. Negative values indicate the unprivileged group has a lower TPR.
+
+*   **Equalized Odds Difference**
+    *   **Description:** Measures the average of absolute differences in False Positive Rates (FPR) and True Positive Rates (TPR) between the unprivileged and privileged groups. A value of 0 indicates perfect equality in FPR and TPR.
+        `Equalized Odds Difference = 0.5 * [abs(FPR_unprivileged - FPR_privileged) + abs(TPR_unprivileged - TPR_privileged)]`
+    *   **Interpretation:** Values closer to 0 are preferred. Higher values indicate disparities in error rates (FPR) and correct classification rates for positive instances (TPR) across groups.
+
+*   **False Positive Rate Difference**
+    *   **Description:** Calculates the difference in False Positive Rates (FPR) between unprivileged and privileged groups (`FPR_unprivileged - FPR_privileged`). FPR is the proportion of actual negatives incorrectly classified as positive.
+    *   **Interpretation:** Values closer to 0 indicate similar FPRs across groups. Positive values mean the unprivileged group has a higher FPR; negative values mean the privileged group has a higher FPR.
+
+*   **False Negative Rate Difference**
+    *   **Description:** Calculates the difference in False Negative Rates (FNR) between unprivileged and privileged groups (`FNR_unprivileged - FNR_privileged`). FNR is the proportion of actual positives incorrectly classified as negative.
+    *   **Interpretation:** Values closer to 0 indicate similar FNRs across groups. Positive values mean the unprivileged group has a higher FNR; negative values mean the privileged group has a higher FNR.
+
+## Current Limitations
+
+*   **Binary Classification Focus:** The tools are primarily designed for binary classification tasks where there is a clear favorable and unfavorable outcome. This is due to the use of `aif360.datasets.BinaryLabelDataset` and associated metrics.
+*   **CSV Input Only:** Input data must be provided in CSV format.
+*   **Group Definition:** Users must correctly define `privileged_groups` and `unprivileged_groups`. These are provided as lists of dictionaries, where each dictionary specifies a protected attribute and its value for that group (e.g., `[{'sex': 1, 'race': 'White'}]`). The values must match those in the input CSV.
+*   **Favorable/Unfavorable Outcome Definition:** The meaning of "favorable" (e.g., loan approved, hired) and "unfavorable" outcomes is critical and must be explicitly defined by the user via `favorable_label_value` and `unfavorable_label_value`.
+*   **Single Protected Attribute for some Metrics:** While `protected_attribute_names` can be a list, some AIF360 metrics and visualizations are often most straightforward when analyzing one protected attribute at a time or carefully constructed combined groups. The examples primarily show single attribute group definitions.
+
+## Bias Mitigation
+
+Understanding and addressing fairness in machine learning often involves not just measuring bias but also applying techniques to mitigate it. For a conceptual overview of different categories of bias mitigation techniques (pre-processing, in-processing, and post-processing) and examples of common algorithms, please see the [Bias Mitigation Overview](./bias_mitigation.md) document.
+
+### Available Mitigation Functions
+
+#### Applying Reweighing
+
+This repository includes an implementation of the Reweighing pre-processing technique, which assigns weights to instances in the dataset to improve group fairness. The `apply_reweighing` function in `mitigation_techniques.py` can be used for this purpose.
+
+**Function Signature:**
+```python
+apply_reweighing(
+    input_file: str,
+    output_file: str,
+    label_name: str,
+    protected_attribute_names: list[str],
+    privileged_groups: list[dict],
+    unprivileged_groups: list[dict],
+    favorable_label_value: float = 1.0,
+    unfavorable_label_value: float = 0.0
+)
+```
+
+**Parameters:**
+*   `input_file (str)`: Path to the input CSV file.
+*   `output_file (str)`: Path where the reweighed data (original data + instance weights) will be saved.
+*   `label_name (str)`: The name of the target variable column.
+*   `protected_attribute_names (list[str])`: List of names of the protected attribute columns.
+*   `privileged_groups (list[dict])`: Definitions for privileged groups (e.g., `[{'sex': 1}]`).
+*   `unprivileged_groups (list[dict])`: Definitions for unprivileged groups (e.g., `[{'sex': 0}]`).
+*   `favorable_label_value (float, optional)`: Value in the label column considered favorable. Defaults to `1.0`.
+*   `unfavorable_label_value (float, optional)`: Value in the label column considered unfavorable. Defaults to `0.0`.
+
+**Usage Example:**
 
 ```python
+from mitigation_techniques import apply_reweighing
+
+apply_reweighing(
+    input_file='path/to/your/input.csv',
+    output_file='path/to/your/reweighed_data.csv',
+    label_name='your_label_column',
+    protected_attribute_names=['your_protected_attribute'],
+    privileged_groups=[{'your_protected_attribute': 'privileged_value'}],
+    unprivileged_groups=[{'your_protected_attribute': 'unprivileged_value'}],
+    favorable_label_value=1.0,
+    unfavorable_label_value=0.0
+)
+```
+This will create a new CSV file at `path/to/your/reweighed_data.csv`. This output file will contain all the original data from `input.csv` plus an additional column named `instance_weights`. These weights can then be used in training fairness-aware machine learning models or in other fairness-sensitive parts of a data processing pipeline.
+
+## Reporting Features
+
+### HTML Analysis Report
+
+The toolkit is designed to generate a consolidated HTML report summarizing the bias and fairness metrics for all analyzed protected attributes. This provides a convenient way to view all results in a single document.
+
+**Configuration:**
+
+You can control HTML report generation via the `config_template.yaml` file, within the `visualization_params` section:
+
+```yaml
+visualization_params:
+  # ... other visualization params ...
+  generate_charts: true # Example, may be configured separately
+  charts_to_generate:
+    - "Disparate Impact"
+    # ... other charts ...
+  chart_format: "png"
+  generate_html_report: true  # Set to true to enable HTML report generation
+  html_report_filename: "fairness_analysis_report.html" # Specify the desired filename
+```
+
+**Intended Content:**
+The HTML report is intended to include:
+*   A summary of the analysis configuration (input file, label name).
+*   Timestamp of the report generation.
+*   For each protected attribute analyzed:
+    *   Tables for bias metrics (if `bias_check` was run).
+    *   Tables for fairness metrics (if `fairness_check` was run).
+    *   Embedded charts (if chart generation was enabled for specific metrics).
+
+**Note on Current Status:** While the configuration options for HTML reporting (`generate_html_report` and `html_report_filename`) are available in `config_template.yaml` and parsed by `run_analysis.py`, the actual generation of the HTML report file is **not yet implemented** in the current version due to development tool limitations. This feature is planned for completion in a future update. When implemented, `run_analysis.py` will produce this HTML file in the specified `output_directory`.
+
+## Unit Tests
+
+The repository includes `test_bias_fairness.py` for unit testing the core functions. To run these tests:
+
+```bash
 python -m unittest test_bias_fairness.py
 ```
-## Additional Information
-This repository is only an example and the actual implementation may vary depending on the specific use case and dataset. The code also does not cover all possible types of biases and fairness issues, and should be used as a starting point for further testing and analysis.
+Ensure your environment is set up with the necessary libraries and that `sample_test_data_sex.csv` is present in the root directory.
 
-### Contributing
-Please feel free to contribute to this repository by creating a pull request with new features and improvements.
+## Contributing
 
-## Authors
-Emre Tasar
-License
-This project is licensed under the MIT License - see the LICENSE.md file for details.
+Contributions are welcome! Please feel free to fork the repository, make your changes, and submit a pull request. Ensure that your changes are well-documented and include unit tests where appropriate.
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details. (Assuming a LICENSE file exists or will be added).
+```
+*Note: The "Authors" section was removed as it's often maintained via Git history or a dedicated AUTHORS file. If "Emre Tasar" is the sole author and wishes to be credited directly in the README, that part can be re-added.*
+```
 
 

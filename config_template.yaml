@@ -1,0 +1,53 @@
+# Configuration for bias and fairness analysis
+
+# Input and Output
+input_file: "sample_test_data_sex.csv" # Path to the input CSV file
+output_directory: "analysis_results"   # Directory to save output CSV files
+
+# Analysis Parameters
+# These parameters are used for both bias and fairness checks.
+analysis_params:
+  label_name: "outcome"                 # Column name of the target variable (label)
+  favorable_label_value: 1.0            # Value in the label column considered favorable
+  unfavorable_label_value: 0.0          # Value in the label column considered unfavorable
+
+  # Define protected attributes to analyze.
+  # For each attribute, specify its name and the definitions for privileged and unprivileged groups.
+  # The group definitions are lists of dictionaries, as expected by aif360.
+  # Example: [{attribute_name: value_for_group}]
+  protected_attributes_definitions:
+    - name: "sex" # Name of the protected attribute column in your CSV
+      privileged_groups: [{sex: 1}]
+      unprivileged_groups: [{sex: 0}]
+    # Add more protected attributes here if needed, for example:
+    # - name: "race"
+    #   privileged_groups: [{race: 'White'}]
+    #   unprivileged_groups: [{race: 'Black'}]
+
+# Analyses to Perform
+# Set to true to run the respective analysis, false to skip.
+analyses_to_run:
+  bias_check: true
+  fairness_check: true # fairness_check now includes:
+                       # - Accuracy
+                       # - Balanced Accuracy
+                       # - Demographic Parity Difference
+                       # - Equal Opportunity Difference
+                       # - Equalized Odds Difference (New)
+                       # - False Positive Rate Difference (New)
+                       # - False Negative Rate Difference (New)
+
+# Optional: Specify output filenames (defaults will be used if not provided)
+# output_filenames:
+#   bias_report: "bias_metrics.csv"
+#   fairness_report: "fairness_metrics.csv"
+
+visualization_params:
+  generate_charts: true # Master switch for generating any charts
+  charts_to_generate: # Specify which charts to generate, metrics should match those in CSVs
+    - "Disparate Impact"
+    - "Demographic Parity Difference"
+    - "Equalized Odds Difference"
+  chart_format: "png" # e.g., png, jpg, pdf
+  generate_html_report: true # New flag for HTML report
+  html_report_filename: "fairness_analysis_report.html" # Optional: specify report filename

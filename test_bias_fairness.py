@@ -381,3 +381,41 @@ class TestMitigationTechniques(unittest.TestCase):
         if not output_df.empty: # Ensure dataframe is not empty before accessing all()
             self.assertFalse((output_df['instance_weights'] == 1.0).all(),
                              "All instance weights are 1.0, reweighing may not have had desired effect.")
+
+    def test_apply_disparate_impact_remover_minimal(self):
+        # This test focuses on ensuring the function runs and creates an output file.
+        # It uses the new sample data.
+        from mitigation_techniques import apply_disparate_impact_remover # Import here
+
+        input_csv = 'sample_data/sample_data_adult_binary.csv'
+        if not os.path.exists(input_csv):
+            self.skipTest(f"{input_csv} not found, skipping test.")
+
+        output_file_test = 'test_dir_repaired_minimal.csv'
+        if os.path.exists(output_file_test):
+            os.remove(output_file_test) # Clean up before run
+
+        common_params = {
+            'input_file': input_csv,
+            'protected_attribute_names': ['sex', 'race'], # For BinaryLabelDataset structure
+            'sensitive_attribute_name': 'sex',           # Attribute to repair based on
+            'label_name_for_dataset_init': 'income-label',
+            'favorable_label_for_dataset_init': 1.0,
+            'unfavorable_label_for_dataset_init': 0.0,
+            'repair_level': 1.0
+        }
+
+        try:
+            apply_disparate_impact_remover(**common_params, output_file=output_file_test)
+            self.assertTrue(os.path.exists(output_file_test), "Output file was not created.")
+
+            # Basic check: output file is not empty and is a valid CSV
+            output_df = pd.read_csv(output_file_test)
+            self.assertFalse(output_df.empty, "Output CSV file is empty.")
+
+            input_df = pd.read_csv(input_csv)
+            self.assertEqual(len(output_df), len(input_df), "Output CSV has different number of rows than input.")
+
+        finally: # Ensure cleanup
+            if os.path.exists(output_file_test):
+                os.remove(output_file_test)

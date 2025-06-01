@@ -10,6 +10,11 @@ The toolkit currently includes two main scripts:
 
 These tools help in identifying disparities across different demographic groups defined by protected attributes.
 
+## Sample Datasets
+
+This toolkit includes sample datasets to help you get started and test its features. These are located in the `sample_data/` directory.
+For detailed information about these datasets, including column descriptions and their intended use for binary vs. multi-class classification examples, please refer to [DATASETS.md](./DATASETS.md).
+
 ## Prerequisites
 
 -   Python 3.x
@@ -231,6 +236,52 @@ apply_reweighing(
 )
 ```
 This will create a new CSV file at `path/to/your/reweighed_data.csv`. This output file will contain all the original data from `input.csv` plus an additional column named `instance_weights`. These weights can then be used in training fairness-aware machine learning models or in other fairness-sensitive parts of a data processing pipeline.
+
+#### Applying Disparate Impact Remover
+
+This repository also includes a utility for applying the Disparate Impact Remover pre-processing technique. This algorithm modifies feature values in the dataset to reduce disparate impact related to a specified sensitive attribute. The goal is to transform features such that they become less correlated with the sensitive attribute, while trying to preserve utility for downstream tasks.
+
+**Function Signature:**
+```python
+apply_disparate_impact_remover(
+    input_file: str,
+    output_file: str,
+    protected_attribute_names: list[str],
+    sensitive_attribute_name: str,
+    label_name_for_dataset_init: str,
+    favorable_label_for_dataset_init: float = 1.0,
+    unfavorable_label_for_dataset_init: float = 0.0,
+    repair_level: float = 1.0
+)
+```
+
+**Parameters:**
+*   `input_file (str)`: Path to the input CSV file.
+*   `output_file (str)`: Path where the repaired data will be saved.
+*   `protected_attribute_names (list[str])`: List of all protected attribute column names. This is used to initialize the AIF360 `BinaryLabelDataset`.
+*   `sensitive_attribute_name (str)`: The specific protected attribute name that the Disparate Impact Remover should focus on for repair. This must be one of the names included in `protected_attribute_names`.
+*   `label_name_for_dataset_init (str)`: The name of the label column. While Disparate Impact Remover is an unsupervised technique (it doesn't use labels for its repair logic), AIF360's `BinaryLabelDataset` structure requires a label.
+*   `favorable_label_for_dataset_init (float, optional)`: Favorable outcome value for dataset initialization. Defaults to `1.0`.
+*   `unfavorable_label_for_dataset_init (float, optional)`: Unfavorable outcome value for dataset initialization. Defaults to `0.0`.
+*   `repair_level (float, optional)`: The level of repair to apply, ranging from 0.0 (no repair) to 1.0 (full repair). Defaults to `1.0`.
+
+**Usage Example:**
+
+```python
+from mitigation_techniques import apply_disparate_impact_remover
+
+apply_disparate_impact_remover(
+    input_file='sample_data/sample_data_adult_binary.csv',
+    output_file='path/to/your/repaired_data.csv',
+    protected_attribute_names=['sex', 'race'],
+    sensitive_attribute_name='sex',
+    label_name_for_dataset_init='income-label',
+    favorable_label_for_dataset_init=1.0,
+    unfavorable_label_for_dataset_init=0.0,
+    repair_level=0.8
+)
+```
+This will create a new CSV file at `path/to/your/repaired_data.csv`. The feature values in this file (especially those correlated with the `sensitive_attribute_name`) may be altered compared to the input file, aiming to reduce disparate impact. The original label and protected attribute columns are preserved.
 
 ## Reporting Features
 

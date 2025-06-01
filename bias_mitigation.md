@@ -21,8 +21,8 @@ Pre-processing techniques modify the training data before a model is trained, ai
     *   **AIF360 Example:** `aif360.algorithms.preprocessing.Reweighing`
 
 *   **Disparate Impact Remover**
-    *   **Explanation:** Modifies feature values for different groups to reduce disparate impact, which occurs when the selection rates for different groups are significantly different. It attempts to achieve this while preserving rank ordering within groups.
-    *   **AIF360 Example:** `aif360.algorithms.preprocessing.DisparateImpactRemover`
+    *   **Explanation:** Modifies feature values for different groups to reduce disparate impact with respect to a specified sensitive attribute. It attempts to achieve this while preserving rank ordering within groups as much as possible.
+    *   **AIF360 Example:** `aif360.algorithms.preprocessing.DisparateImpactRemover`. (A utility function `apply_disparate_impact_remover` is available in `mitigation_techniques.py` providing a wrapper for this.)
 
 *   **Optimized Preprocessing (OptimPreproc)**
     *   **Explanation:** Learns a data transformation by modifying features and labels in a way that optimizes for both model accuracy and a chosen fairness metric. It essentially tries to find the "closest" fair dataset to the original one.

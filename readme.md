@@ -123,6 +123,45 @@ print(f"Fairness metrics saved to {output_file}")
 ```
 This will analyze the specified dataset and save fairness metrics to `fairness_metrics.csv`.
 
+### `hallbayes_fairness.py`
+
+The repository also integrates the [HallBayes](https://github.com/leochlon/hallbayes)
+hallucination-risk toolkit to help assess disparities in large language model
+responses. After installing HallBayes and setting your OpenAI API key, you can
+run hallucination analysis across prompts associated with different groups and
+then apply existing fairness checks to the resulting decisions.
+
+```bash
+pip install --upgrade openai
+pip install git+https://github.com/leochlon/hallbayes.git
+export OPENAI_API_KEY=sk-...
+```
+
+```python
+from hallbayes_fairness import hallucination_fairness_analysis
+from fairness import fairness_check
+
+prompts = ["Who won the 2019 Nobel Prize in Physics?", "Who won the 2019 Nobel Prize in Physics?"]
+groups = ["group_a", "group_b"]
+
+metrics_df = hallucination_fairness_analysis(prompts, groups, output_file='llm_metrics.csv')
+
+fairness_check(
+    input_file='llm_metrics.csv',
+    output_file='llm_fairness.csv',
+    label_name='decision_answer',
+    protected_attribute_names=['group'],
+    privileged_groups=[{'group': 'group_a'}],
+    unprivileged_groups=[{'group': 'group_b'}],
+    favorable_label_value=1,
+    unfavorable_label_value=0,
+)
+```
+
+The resulting `llm_fairness.csv` file contains standard fairness metrics based
+on the HallBayes decision outputs, enabling systematic evaluation of LLM
+behavior across groups.
+
 ## Available Metrics
 
 The following metrics are calculated by the scripts:
@@ -134,14 +173,14 @@ The following metrics are calculated by the scripts:
         `DI = P(Y=favorable | G=unprivileged) / P(Y=favorable | G=privileged)`
     *   **Interpretation:** Values close to 1.0 are preferred. Values significantly less than 1 (e.g., < 0.8) may indicate bias against the unprivileged group, while values significantly greater than 1 (e.g., > 1.25) may indicate bias against the privileged group. The "four-fifths rule" (DI < 0.8) is a common, though not definitive, threshold.
 
-*   **Average Odds Difference**
-    *   **Description:** Computes the average of the difference in false positive rates (FPR) and true positive rates (TPR) between unprivileged and privileged groups.
-        `Average Odds Difference = 0.5 * [(FPR_unprivileged - FPR_privileged) + (TPR_unprivileged - TPR_privileged)]`
-    *   **Interpretation:** Values closer to 0 indicate better equality of opportunity in terms of error rates. Negative values may suggest bias against the unprivileged group, while positive values may suggest bias against the privileged group.
+*   **Statistical Parity Difference**
+    *   **Description:** Difference in the rate of favorable outcomes between unprivileged and privileged groups.
+        `SPD = P(Y=favorable | G=unprivileged) - P(Y=favorable | G=privileged)`
+    *   **Interpretation:** Values closer to 0 indicate better parity. Positive values indicate higher rates for the unprivileged group and negative values indicate higher rates for the privileged group.
 
-*   **Theil Index**
-    *   **Description:** A measure of inequality. In this context, it's used to measure inequality in outcomes between groups. It ranges from 0 (perfect equality) to 1 (maximum inequality).
-    *   **Interpretation:** Lower values are better, indicating less disparity.
+*   **Mean Difference**
+    *   **Description:** Difference in mean outcomes between unprivileged and privileged groups.
+    *   **Interpretation:** Values closer to 0 suggest less disparity in average outcomes.
 
 ### From `fairness.py` (via `fairness_check`)
 

@@ -69,16 +69,20 @@ def bias_check(input_file: str, output_file: str, label_name: str, protected_att
                                     favorable_label=favorable_label_value,
                                     unfavorable_label=unfavorable_label_value)
 
-        metric = BinaryLabelDatasetMetric(data,
-                                            unprivileged_groups=unprivileged_groups,
-                                            privileged_groups=privileged_groups)
+        dataset_metric = BinaryLabelDatasetMetric(
+            data,
+            unprivileged_groups=unprivileged_groups,
+            privileged_groups=privileged_groups,
+        )
 
-        disparate_impact = metric.disparate_impact()
-        average_odds_difference = metric.average_odds_difference()
-        theil_index = metric.theil_index()
+        disparate_impact = dataset_metric.disparate_impact()
+        statistical_parity_diff = dataset_metric.statistical_parity_difference()
+        mean_diff = dataset_metric.mean_difference()
 
-        scoring_table = {'Metric': ['Disparate Impact', 'Average Odds Difference', 'Theil Index'],
-                        'Score': [disparate_impact, average_odds_difference, theil_index]}
+        scoring_table = {
+            'Metric': ['Disparate Impact', 'Statistical Parity Difference', 'Mean Difference'],
+            'Score': [disparate_impact, statistical_parity_diff, mean_diff]
+        }
         pd.DataFrame(scoring_table).to_csv(output_file, index=False)
 
     except Exception as e:

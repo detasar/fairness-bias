@@ -387,7 +387,7 @@ class TestMitigationTechniques(unittest.TestCase):
         # It uses the new sample data.
         from mitigation_techniques import apply_disparate_impact_remover # Import here
 
-        input_csv = 'sample_data/sample_data_adult_binary.csv'
+        input_csv = 'sample_test_data_sex.csv'
         if not os.path.exists(input_csv):
             self.skipTest(f"{input_csv} not found, skipping test.")
 
@@ -397,9 +397,9 @@ class TestMitigationTechniques(unittest.TestCase):
 
         common_params = {
             'input_file': input_csv,
-            'protected_attribute_names': ['sex', 'race'], # For BinaryLabelDataset structure
-            'sensitive_attribute_name': 'sex',           # Attribute to repair based on
-            'label_name_for_dataset_init': 'income-label',
+            'protected_attribute_names': ['sex'],
+            'sensitive_attribute_name': 'sex',
+            'label_name_for_dataset_init': 'outcome',
             'favorable_label_for_dataset_init': 1.0,
             'unfavorable_label_for_dataset_init': 0.0,
             'repair_level': 1.0

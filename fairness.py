@@ -77,28 +77,30 @@ def fairness_check(input_file: str, output_file: str, label_name: str, protected
                                         privileged_groups=privileged_groups)
 
         accuracy = metric.accuracy()
-    balanced_accuracy = metric.balanced_accuracy()
-    demographic_parity_difference = metric.demographic_parity_difference()
-    equal_opportunity_difference = metric.equal_opportunity_difference()
+        tpr = metric.true_positive_rate()
+        tnr = metric.true_negative_rate()
+        balanced_accuracy = (tpr + tnr) / 2
+        demographic_parity_difference = metric.statistical_parity_difference()
+        equal_opportunity_difference = metric.equal_opportunity_difference()
 
-    # Add new metrics
-    equalized_odds_diff = metric.equalized_odds_difference()
-    fpr_diff = metric.false_positive_rate_difference()
-    fnr_diff = metric.false_negative_rate_difference()
+        # Add new metrics
+        equalized_odds_diff = metric.equalized_odds_difference()
+        fpr_diff = metric.false_positive_rate_difference()
+        fnr_diff = metric.false_negative_rate_difference()
 
-    scoring_table = {
-        'Metric': [
-            'Accuracy', 'Balanced Accuracy', 'Demographic Parity Difference',
-            'Equal Opportunity Difference', 'Equalized Odds Difference',
-            'False Positive Rate Difference', 'False Negative Rate Difference'
-        ],
-        'Score': [
-            accuracy, balanced_accuracy, demographic_parity_difference,
-            equal_opportunity_difference, equalized_odds_diff,
-            fpr_diff, fnr_diff
-        ]
-    }
-    pd.DataFrame(scoring_table).to_csv(output_file, index=False)
+        scoring_table = {
+            'Metric': [
+                'Accuracy', 'Balanced Accuracy', 'Demographic Parity Difference',
+                'Equal Opportunity Difference', 'Equalized Odds Difference',
+                'False Positive Rate Difference', 'False Negative Rate Difference'
+            ],
+            'Score': [
+                accuracy, balanced_accuracy, demographic_parity_difference,
+                equal_opportunity_difference, equalized_odds_diff,
+                fpr_diff, fnr_diff
+            ]
+        }
+        pd.DataFrame(scoring_table).to_csv(output_file, index=False)
 
     except Exception as e:
         raise RuntimeError(f"AIF360 error during fairness check: {e}") from e

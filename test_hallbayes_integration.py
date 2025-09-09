@@ -72,6 +72,20 @@ class TestHallbayesFairness(unittest.TestCase):
         self.assertTrue(os.path.exists(out_file))
         os.remove(out_file)
 
+    def test_analysis_from_csv(self):
+        from hallbayes_fairness import hallucination_fairness_from_csv
+
+        df_input = pd.DataFrame({"group": ["A", "B"], "prompt": ["Q1", "Q2"]})
+        csv_file = "hb_prompts.csv"
+        df_input.to_csv(csv_file, index=False)
+        out_file = "hb_metrics.csv"
+        df = hallucination_fairness_from_csv(csv_file, output_file=out_file)
+
+        self.assertEqual(len(df), 2)
+        self.assertTrue(os.path.exists(out_file))
+        os.remove(csv_file)
+        os.remove(out_file)
+
 
 if __name__ == '__main__':
     unittest.main()

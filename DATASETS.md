@@ -52,3 +52,11 @@ This document provides an overview of the sample datasets included in this repos
         *   `Graduate`: Corresponds to `education-num` > 13.
 
 These datasets provide a starting point for users to run the analysis scripts and understand their outputs. Users are encouraged to replace these with their own datasets for meaningful analysis.
+
+## 3. `sample_data/sample_hallbayes_prompts.csv`
+
+*   **Description:** A small CSV listing example prompts paired with group labels. It is intended for experimenting with the `hallucination_fairness_from_csv` utility in `hallbayes_fairness.py`.
+*   **Purpose:** Demonstrates how hallucination metrics from HallBayes can be gathered for different groups and later fed into bias and fairness checks.
+*   **Columns:**
+    *   `group`: Identifier for the group or attribute associated with the prompt.
+    *   `prompt`: The text prompt to be evaluated.

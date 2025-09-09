@@ -107,3 +107,50 @@ def hallucination_fairness_analysis(
     if output_file:
         df.to_csv(output_file, index=False)
     return df
+
+
+def hallucination_fairness_from_csv(
+    input_file: str,
+    group_col: str = "group",
+    prompt_col: str = "prompt",
+    output_file: Optional[str] = None,
+    model: str = "gpt-4o-mini",
+    planner_params: Optional[Dict[str, Any]] = None,
+) -> pd.DataFrame:
+    """Load prompts and groups from a CSV and run hallucination analysis.
+
+    Parameters
+    ----------
+    input_file: str
+        Path to a CSV file containing prompt text and associated group labels.
+    group_col: str
+        Name of the column holding group identifiers.
+    prompt_col: str
+        Name of the column holding prompts.
+    output_file: Optional[str]
+        If provided, the resulting metrics are written to this CSV file.
+    model: str
+        OpenAI model name to use with HallBayes backend.
+    planner_params: Optional[Dict[str, Any]]
+        Additional parameters forwarded to ``hallucination_fairness_analysis``.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with hallucination metrics for each prompt in ``input_file``.
+    """
+    df = pd.read_csv(input_file)
+    if group_col not in df.columns:
+        raise ValueError(f"Column '{group_col}' not found in {input_file}")
+    if prompt_col not in df.columns:
+        raise ValueError(f"Column '{prompt_col}' not found in {input_file}")
+
+    prompts = df[prompt_col].tolist()
+    groups = df[group_col].tolist()
+    return hallucination_fairness_analysis(
+        prompts,
+        groups,
+        output_file=output_file,
+        model=model,
+        planner_params=planner_params,
+    )

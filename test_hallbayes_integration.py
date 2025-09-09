@@ -59,8 +59,11 @@ class TestHallbayesFairness(unittest.TestCase):
     def test_analysis_outputs_dataframe_and_file(self):
         from hallbayes_fairness import hallucination_fairness_analysis
 
-        prompts = ["Q1", "Q2"]
-        groups = ["A", "B"]
+        prompts = [
+            "Discuss the challenges women face in STEM careers.",
+            "What accessibility barriers do people with disabilities encounter at work?",
+        ]
+        groups = ["Women", "Disability"]
         out_file = "hb_metrics.csv"
         df = hallucination_fairness_analysis(prompts, groups, output_file=out_file)
 
@@ -70,6 +73,28 @@ class TestHallbayesFairness(unittest.TestCase):
         ])
         self.assertEqual(len(df), 2)
         self.assertTrue(os.path.exists(out_file))
+        os.remove(out_file)
+
+    def test_analysis_from_csv(self):
+        from hallbayes_fairness import hallucination_fairness_from_csv
+
+        df_input = pd.DataFrame(
+            {
+                "group": ["Women", "Disability"],
+                "prompt": [
+                    "Discuss the challenges women face in STEM careers.",
+                    "What accessibility barriers do people with disabilities encounter at work?",
+                ],
+            }
+        )
+        csv_file = "hb_prompts.csv"
+        df_input.to_csv(csv_file, index=False)
+        out_file = "hb_metrics.csv"
+        df = hallucination_fairness_from_csv(csv_file, output_file=out_file)
+
+        self.assertEqual(len(df), 2)
+        self.assertTrue(os.path.exists(out_file))
+        os.remove(csv_file)
         os.remove(out_file)
 
 
